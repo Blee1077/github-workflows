@@ -21,6 +21,10 @@ on:
         type: string
         default: ''
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     uses: ./.github/workflows/deploy-aws-sam.yaml
