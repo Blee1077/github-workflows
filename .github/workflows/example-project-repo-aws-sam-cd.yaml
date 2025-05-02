@@ -2,7 +2,7 @@ name: Deploy via Shared SAM CD Workflow
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
