@@ -23,7 +23,7 @@ on:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/deploy-aws-sam.yml
+    uses: ./.github/workflows/deploy-aws-sam.yaml
     with:
       stack-name: ${{ inputs.stack-name }}
       s3-bucket: ${{ inputs.s3-bucket }}
