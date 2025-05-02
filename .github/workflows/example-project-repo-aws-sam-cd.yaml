@@ -1,19 +1,33 @@
-name: Deploy via Shared SAM CD Workflow
+name: Deploy via Shared CD Workflow
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
+    inputs:
+      stack-name:
+        description: 'Name of the CloudFormation stack'
+        required: true
+      s3-bucket:
+        description: 'S3 bucket for SAM package'
+        required: true
+      region:
+        description: 'AWS region'
+        required: true
+        default: eu-west-2
+      template:
+        description: 'SAM template path (optional)'
+        required: false
+        default: template.yaml
+      parameters:
+        description: 'Optional --parameter-overrides string'
+        required: false
+        default: ''
 
 jobs:
-  deploy:
-    uses: blee1077/github-workflows/.github/workflows/deploy-aws-sam.yaml@main
+  trigger-shared-deploy:
+    uses: blee1077/github-workflows/.github/workflows/dispatch-cd.yml@main
     with:
-      stack-name: my-app-stack
-      s3-bucket: my-deploy-bucket
-      region: eu-west-2
-      template: infra/template.yaml
-      parameters: |
-        --parameter-overrides \
-        Environment=prod \
-        AppVersion=1.2.3
+      stack-name: ${{ github.event.inputs.stack-name }}
+      s3-bucket: ${{ github.event.inputs.s3-bucket }}
+      region: ${{ github.event.inputs.region }}
+      template: ${{ github.event.inputs.template }}
+      parameters: ${{ github.event.inputs.parameters }}

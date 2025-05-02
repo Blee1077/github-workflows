@@ -1,0 +1,14 @@
+name: Trigger for deploy via Shared CD Workflows
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-aws-sam.yml
+    with:
+      stack-name: ${{ inputs.stack-name }}
+      s3-bucket: ${{ inputs.s3-bucket }}
+      region: ${{ inputs.region }}
+      template: ${{ inputs.template }}
+      parameters: ${{ inputs.parameters }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
