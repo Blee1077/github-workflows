@@ -26,13 +26,14 @@ on:
         type: string
         default: ""
 
+env:
+  GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}       
+
 jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger shared repo deploy via API
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
         run: |
           curl -X POST https://api.github.com/repos/blee1077/github-workflows/actions/workflows/deploy-aws-sam.yaml/dispatches \
             -H "Authorization: token $GH_TOKEN" \
