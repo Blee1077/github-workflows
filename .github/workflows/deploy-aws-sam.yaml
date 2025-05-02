@@ -1,7 +1,7 @@
 name: Deploy SAM App
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       stack-name:
         required: true
@@ -19,19 +19,15 @@ on:
       parameters:
         required: false
         type: string
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      id-token: write
 
     steps:
       - name: Checkout project repo
