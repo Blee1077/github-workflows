@@ -7,18 +7,23 @@ on:
     inputs:
       stack_name:
         required: true
+        type: string
         default: sweater-discount-app
       s3_bucket:
         required: true
+        type: string
         default: your-s3-bucket
       region:
         required: true
+        type: string
         default: eu-west-2
       template:
         required: false
+        type: string
         default: template.yaml
       parameters:
         required: false
+        type: string
         default: ""
 
 jobs:
