@@ -5,11 +5,11 @@ name: Trigger Shared SAM Deploy
 on:
   workflow_call:
     inputs:
-      stack_name:
+      stack-name:
         required: true
         type: string
         default: sweater-discount-app
-      s3_bucket:
+      s3-bucket:
         required: true
         type: string
         default: your-s3-bucket
@@ -40,8 +40,8 @@ jobs:
             -d '{
               "ref": "main",
               "inputs": {
-                "stack_name": "${{ inputs.stack_name }}",
-                "s3_bucket": "${{ inputs.s3_bucket }}",
+                "stack_name": "${{ inputs.stack-name }}",
+                "s3_bucket": "${{ inputs.s3-bucket }}",
                 "region": "${{ inputs.region }}",
                 "template": "${{ inputs.template }}",
                 "parameters": "${{ inputs.parameters }}"
