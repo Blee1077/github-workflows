@@ -1,0 +1,19 @@
+name: Deploy via Shared SAM CD Workflow
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: blee1077/github-workflows/.github/workflows/deploy-aws-sam.yaml@main
+    with:
+      stack-name: my-app-stack
+      s3-bucket: my-deploy-bucket
+      region: eu-west-2
+      template: infra/template.yaml
+      parameters: |
+        --parameter-overrides \
+        Environment=prod \
+        AppVersion=1.2.3

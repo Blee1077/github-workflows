@@ -1,0 +1,104 @@
+name: Build and Push Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      dockerfile-path:
+        required: true
+        type: string
+      image-name:
+        required: true
+        type: string
+      image-tag:
+        required: false
+        type: string
+        default: latest
+      run-trivy-scan:
+        required: false
+        type: boolean
+        default: false
+      run-copa-patch:
+        required: false
+        type: boolean
+        default: false
+
+
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout calling project repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ inputs.dockerfile-path }}
+          file: ${{ inputs.dockerfile-path }}/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+
+      - name: Scan image for vulnerabilities with Trivy
+        if: ${{ inputs.run-trivy-scan }}
+        uses: aquasecurity/trivy-action@0.16.1
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+          format: table
+          ignore-unfixed: true
+
+      - name: Upload Trivy Scan Report
+        if: ${{ inputs.run-trivy-scan }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json
+          retention-days: 7
+
+      - name: Check for High or Critical vulnerabilities
+        if: ${{ inputs.run-trivy-scan && inputs.run-copa-patch }}
+        id: vuln-check
+        run: |
+          # Find if high or critical vulnerabilities are present
+          high=$(jq '[.Results[].Vulnerabilities[] | select(.Severity=="HIGH")] | length' trivy-report.json)
+          critical=$(jq '[.Results[].Vulnerabilities[] | select(.Severity=="CRITICAL")] | length' trivy-report.json)
+
+          # Print how many high and critical vulnerabilities are present
+          echo "High: $high, Critical: $critical"
+
+          # Set bool for next steps
+          if [ "$high" -gt 0 ] || [ "$critical" -gt 0 ]; then
+            echo "vulns_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "vulns_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Patch image with Copa
+        if: ${{ steps.vuln-check.outputs.vulns_found == 'true' }}
+        run: |
+          curl -sSL https://github.com/project-copacetic/copacetic/releases/latest/download/copa-linux-amd64 -o copa
+          chmod +x copa
+          sudo mv copa /usr/local/bin/
+
+          image=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}
+          tag=${{ inputs.image-tag }}
+
+          # Run Copa patching
+          copa patch -i $image:$tag -r trivy-report.json -t patched-image
+
+          # Tag patched image with the original tag (overwrite)
+          docker tag patched-image $image:$tag
+          docker push $image:$tag

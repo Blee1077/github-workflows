@@ -1,0 +1,90 @@
+name: Deploy Python CDK App
+
+on:
+  workflow_call:
+    inputs:
+      app-path:
+        required: false
+        type: string
+        default: .
+      cdk-command:
+        required: false
+        type: string
+        default: deploy
+      stacks:
+        required: false
+        type: string
+        default: ''
+      region:
+        required: true
+        type: string
+      context:
+        required: false
+        type: string
+        default: ''
+      auto-approve:
+        required: false
+        type: boolean
+        default: true
+      post-deploy-check:
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.app-path }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install AWS CDK CLI
+        run: npm install -g aws-cdk
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Run CDK ${{ inputs.cdk-command }}
+        working-directory: ${{ inputs.app-path }}
+        run: |
+          CMD="cdk ${{ inputs.cdk-command }}"
+
+          if [ "${{ inputs.stacks }}" != "" ]; then
+            CMD="$CMD ${{ inputs.stacks }}"
+          fi
+
+          if [ "${{ inputs.context }}" != "" ]; then
+            CMD="$CMD ${{ inputs.context }}"
+          fi
+
+          if [ "${{ inputs.auto-approve }}" = "true" ] && [ "${{ inputs.cdk-command }}" = "deploy" ]; then
+            CMD="$CMD --require-approval never"
+          fi
+
+          echo "Running: $CMD"
+          $CMD
+
+      - name: Run Post-Deploy Check
+        if: ${{ inputs.post-deploy-check != '' }}
+        run: |
+          echo "Running post-deploy check: ${{ inputs.post-deploy-check }}"
+          bash -c "${{ inputs.post-deploy-check }}"

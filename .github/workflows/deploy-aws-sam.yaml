@@ -1,0 +1,80 @@
+name: Deploy SAM App
+
+on:
+  workflow_call:
+    inputs:
+      stack-name:
+        required: true
+        type: string
+      s3-bucket:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+      template:
+        required: false
+        type: string
+        default: template.yaml
+      parameters:
+        required: false
+        type: string
+
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout project repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Validate SAM template
+        run: sam validate --template-file ${{ inputs.template }}
+
+      - name: Build SAM app
+        run: sam build --template ${{ inputs.template }}
+
+      - name: Package SAM app
+        run: |
+          sam package \
+            --s3-bucket ${{ inputs.s3-bucket }} \
+            --output-template-file packaged.yaml
+
+      - name: Deploy SAM app
+        run: |
+          sam deploy \
+            --template-file packaged.yaml \
+            --stack-name ${{ inputs.stack-name }} \
+            --capabilities CAPABILITY_IAM \
+            --region ${{ inputs.region }} \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            ${{ inputs.parameters }}

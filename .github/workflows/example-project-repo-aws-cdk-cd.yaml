@@ -1,0 +1,20 @@
+name: Deploy via Shared CDK CD Workflow
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: blee1077/github-workflows/.github/workflows/deploy-aws-cdk.yaml@main
+    with:
+      app-path: cdk_app
+      region: eu-west-2
+      stacks: MyAppStack
+      context: "--context env=prod --context app=web"
+      auto-approve: true
+      post-deploy-check: "curl -fsSL https://my-app.example.com/healthz"
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
