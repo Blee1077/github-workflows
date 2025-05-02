@@ -1,4 +1,25 @@
-name: Trigger for deploy via Shared CD Workflows
+name: Trigger Shared SAM Deploy
+
+on:
+  workflow_call:
+    inputs:
+      stack-name:
+        required: true
+        type: string
+      s3-bucket:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+      template:
+        required: false
+        type: string
+        default: template.yaml
+      parameters:
+        required: false
+        type: string
+        default: ''
 
 jobs:
   deploy:
