@@ -1,4 +1,4 @@
-# .github/workflows/deploy.yml (in project repo)
+# This is invoked by the workflow in the project repositories.
 
 name: Trigger Shared SAM Deploy
 
@@ -8,13 +8,11 @@ on:
       stack-name:
         required: true
         type: string
-        default: sweater-discount-app
       s3-bucket:
         required: true
         type: string
-        default: your-s3-bucket
       region:
-        required: true
+        required: false
         type: string
         default: eu-west-2
       template:
