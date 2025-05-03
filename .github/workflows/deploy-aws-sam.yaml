@@ -39,7 +39,7 @@ jobs:
       - name: Checkout project repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}
+          repository: ${{ inputs.caller-repo }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ env.PROJECT_PATH }}
 
@@ -59,7 +59,7 @@ jobs:
           aws-region: ${{ inputs.region }}
 
       - name: Validate SAM template
-        run: sam validate --template-file ${{ env.PROJECT_PATH }}/${{ inputs.template }}
+        run: sam validate --template-file $PROJECT_PATH/${{ inputs.template }}
 
       - name: Build SAM app
         run: sam build --template $PROJECT_PATH/${{ inputs.template }}
