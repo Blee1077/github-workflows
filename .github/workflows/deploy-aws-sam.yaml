@@ -3,6 +3,9 @@ name: Deploy SAM App
 on:
   workflow_dispatch:
     inputs:
+      caller-repo:
+        required: true
+        type: string
       stack-name:
         required: true
         type: string

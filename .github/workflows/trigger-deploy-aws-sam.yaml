@@ -27,24 +27,49 @@ on:
         default: ""
 
 env:
-  GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}       
+  GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
 
 jobs:
   dispatch:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Trigger shared repo deploy via API
+      - name: Extract repo name
+        id: extract
         run: |
+          repo=$(jq -r .repository.full_name "$GITHUB_EVENT_PATH")
+          echo "caller_repo=$repo" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger CD workflow
+        env:
+          CALLER_REPO: ${{ steps.extract.outputs.caller_repo }}
+          TEMPLATE: ${{ inputs.template }}
+          STACK: ${{ inputs['stack-name'] }}
+          BUCKET: ${{ inputs['s3-bucket'] }}
+          REGION: ${{ inputs.region }}
+          PARAMS: ${{ inputs.parameters }}
+        run: |
+          payload=$(jq -n \
+            --arg ref "main" \
+            --arg repo "$CALLER_REPO" \
+            --arg tmpl "$TEMPLATE" \
+            --arg stack "$STACK" \
+            --arg bucket "$BUCKET" \
+            --arg region "$REGION" \
+            --arg params "$PARAMS" \
+            '{
+              ref: $ref,
+              inputs: {
+                "caller-repo": $repo,
+                "template": $tmpl,
+                "stack-name": $stack,
+                "s3-bucket": $bucket,
+                "region": $region,
+                "parameters": $params
+              }
+            }')
+
           curl -X POST https://api.github.com/repos/blee1077/github-workflows/actions/workflows/deploy-aws-sam.yaml/dispatches \
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
-            -d '{
-              "ref": "main",
-              "inputs": {
-                "stack-name": "${{ inputs.stack-name }}",
-                "s3-bucket": "${{ inputs.s3-bucket }}",
-                "region": "${{ inputs.region }}",
-                "template": "${{ inputs.template }}",
-                "parameters": "${{ inputs.parameters }}"
-              }
-            }'
+            -d "$payload"
