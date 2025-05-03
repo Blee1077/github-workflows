@@ -41,8 +41,8 @@ jobs:
             -d '{
               "ref": "main",
               "inputs": {
-                "stack_name": "${{ inputs.stack-name }}",
-                "s3_bucket": "${{ inputs.s3-bucket }}",
+                "stack-name": "${{ inputs.stack-name }}",
+                "s3-bucket": "${{ inputs.s3-bucket }}",
                 "region": "${{ inputs.region }}",
                 "template": "${{ inputs.template }}",
                 "parameters": "${{ inputs.parameters }}"
