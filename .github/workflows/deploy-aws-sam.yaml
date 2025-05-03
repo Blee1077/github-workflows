@@ -26,7 +26,7 @@ permissions:
   pull-requests: write
 
 env:
-  PROJECT_PATH: project  # For checking out repo into specific dir
+  PROJECT_PATH: ${{ github.workspace }}/project  # For checking out repo into specific dir
 
 jobs:
   deploy:
@@ -59,7 +59,7 @@ jobs:
         run: sam validate --template-file ${{ env.PROJECT_PATH }}/${{ inputs.template }}
 
       - name: Build SAM app
-        run: sam build --template ${{ env.PROJECT_PATH }}/${{ inputs.template }}
+        run: sam build --template $PROJECT_PATH/${{ inputs.template }}
 
       - name: Package SAM app
         run: |
