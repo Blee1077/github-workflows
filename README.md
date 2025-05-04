@@ -39,7 +39,7 @@ github-workflows (this repo)
 
 ---
 
-## 🧱 Workflows in This Repo
+## 🧭 Workflows Overview
 
 ### 🔧 CI Workflows
 
@@ -50,7 +50,7 @@ github-workflows (this repo)
 | Execution        | `exec-build-and-push-image.yaml`    | Shared repo  |
 
 
-### CD Workflows
+### ☁️ CD Workflows
 
 | Purpose          | Workflow File                 | Location     |
 | ---------------- | ----------------------------- | ------------ |
@@ -58,6 +58,9 @@ github-workflows (this repo)
 | Dispatch trigger | `trigger-deploy-aws-sam.yaml` | Shared repo  |
 | Execution        | `exec-deploy-aws-sam.yaml`    | Shared repo  |
 
+---
+
+## 🧱 Workflows in This Repo
 
 ### 🚀 `exec-build-and-push-image.yaml`
 
@@ -67,8 +70,7 @@ Builds a Docker image, optionally scans it with Trivy, patches it with Copa, and
 - `dockerfile-path` (string, required) – path to Dockerfile in project repo
 - `image-name` (string, required) – Docker image name
 - `image-tag` (string, default: `latest`)
-- `run-trivy-scan` (boolean, default: `false`)
-- `run-copa-patch` (boolean, default: `false`)
+- `run-trivy-scan-and-copa-patch` (boolean, default: `false`)
 
 ---
 
