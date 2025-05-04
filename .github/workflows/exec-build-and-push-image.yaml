@@ -94,6 +94,7 @@ jobs:
           FILE="copa_${VERSION#v}_linux_amd64.tar.gz"
           URL="https://github.com/project-copacetic/copacetic/releases/download/${VERSION}/${FILE}"
 
+          # Download Copa, extract, and 'install'
           curl -sSL "$URL" -o copa.tar.gz
           tar -xzf copa.tar.gz
           sudo mv copa /usr/local/bin/
@@ -102,7 +103,7 @@ jobs:
           image=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}
           tag=${{ inputs.image-tag }}
 
-          copa patch -i $image:$tag -r trivy-report.json -t patched-image
+          # Patch and overwrite the original image
+          copa patch -i $image:$tag -r trivy-report.json -t -t $image:$tag
 
-          docker tag patched-image $image:$tag
           docker push $image:$tag
