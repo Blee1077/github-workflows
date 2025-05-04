@@ -13,13 +13,11 @@ on:
         required: true
         type: string
       image-tag:
-        required: false
+        required: true
         type: string
-        default: latest
       run-trivy-scan-and-copa-patch:
-        required: false
+        required: true
         type: boolean
-        default: false
 
 permissions:
   contents: write
