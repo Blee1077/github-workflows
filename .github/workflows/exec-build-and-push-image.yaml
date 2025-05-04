@@ -63,6 +63,15 @@ jobs:
           output: trivy-report.json
           ignore-unfixed: true
 
+      - name: Print vulnerability summary by severity
+        if: ${{ inputs.run-trivy-scan-and-copa-patch }}
+        run: |
+          echo "🔍 Vulnerability Summary:"
+          for severity in CRITICAL HIGH MEDIUM LOW UNKNOWN; do
+            count=$(jq "[.Results[].Vulnerabilities[]? | select(.Severity == \"$severity\") ] | length" trivy-report.json)
+            echo "  $severity: $count"
+          done
+
       - name: Upload Trivy Scan Report
         if: ${{ inputs.run-trivy-scan-and-copa-patch }}
         uses: actions/upload-artifact@v4
