@@ -58,7 +58,7 @@ jobs:
             '{
               ref: $ref,
               inputs: {
-                "caller-repo": $caller_repo
+                "caller-repo": $caller_repo,
                 "dockerfile-path": $dockerfile,
                 "image-name": $image,
                 "image-tag": $tag,
