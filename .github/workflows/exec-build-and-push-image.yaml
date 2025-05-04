@@ -3,6 +3,9 @@ name: Build and Push Docker Image
 on:
   workflow_dispatch:
     inputs:
+      caller-repo:
+        required: true
+        type: string
       dockerfile-path:
         required: true
         type: string
@@ -35,7 +38,7 @@ jobs:
       - name: Checkout calling project repo
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}
+          repository: ${{ inputs.caller-repo }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx

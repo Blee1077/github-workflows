@@ -48,6 +48,7 @@ jobs:
           COPA: ${{ inputs.run-copa-patch }}
         run: |
           payload=$(jq -n \
+            --arg caller_repo "$CALLER_REPO" \
             --arg ref "main" \
             --arg dockerfile "$DOCKERFILE" \
             --arg image "$IMAGE" \
@@ -57,6 +58,7 @@ jobs:
             '{
               ref: $ref,
               inputs: {
+                "caller-repo": $caller_repo
                 "dockerfile-path": $dockerfile,
                 "image-name": $image,
                 "image-tag": $tag,
