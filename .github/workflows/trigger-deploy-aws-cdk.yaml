@@ -1,6 +1,6 @@
 # This is invoked by the workflow in the project repositories.
 
-name: Trigger Shared SAM Deploy
+name: Trigger Shared CDK Deploy
 
 on:
   workflow_call:
@@ -67,7 +67,7 @@ jobs:
               }
             }')
 
-          curl -X POST https://api.github.com/repos/blee1077/github-workflows/actions/workflows/exec-deploy-aws-sam.yaml/dispatches \
+          curl -X POST https://api.github.com/repos/blee1077/github-workflows/actions/workflows/deploy-aws-sam.yaml/dispatches \
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             -d "$payload"

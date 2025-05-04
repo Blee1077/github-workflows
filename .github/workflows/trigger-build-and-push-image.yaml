@@ -1,0 +1,71 @@
+# This is invoked by the workflow in the project repositories.
+
+name: Trigger Shared Docker Build
+
+on:
+  workflow_call:
+    inputs:
+      dockerfile-path:
+        required: true
+        type: string
+      image-name:
+        required: true
+        type: string
+      image-tag:
+        required: false
+        type: string
+        default: latest
+      run-trivy-scan:
+        required: false
+        type: boolean
+        default: false
+      run-copa-patch:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract repo name
+        id: extract
+        run: |
+          repo=$(jq -r .repository.full_name "$GITHUB_EVENT_PATH")
+          echo "caller_repo=$repo" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger CI workflow in shared repo
+        env:
+          CALLER_REPO: ${{ steps.extract.outputs.caller_repo }}
+          DOCKERFILE: ${{ inputs.dockerfile-path }}
+          IMAGE: ${{ inputs.image-name }}
+          TAG: ${{ inputs.image-tag }}
+          TRIVY: ${{ inputs.run-trivy-scan }}
+          COPA: ${{ inputs.run-copa-patch }}
+        run: |
+          payload=$(jq -n \
+            --arg ref "main" \
+            --arg dockerfile "$DOCKERFILE" \
+            --arg image "$IMAGE" \
+            --arg tag "$TAG" \
+            --argjson trivy "$TRIVY" \
+            --argjson copa "$COPA" \
+            '{
+              ref: $ref,
+              inputs: {
+                "dockerfile-path": $dockerfile,
+                "image-name": $image,
+                "image-tag": $tag,
+                "run-trivy-scan": $trivy,
+                "run-copa-patch": $copa
+              }
+            }')
+
+          curl -X POST https://api.github.com/repos/blee1077/github-workflows/actions/workflows/exec-build-and-push-image.yaml/dispatches \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -d "$payload"
