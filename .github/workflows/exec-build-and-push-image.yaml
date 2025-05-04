@@ -71,22 +71,6 @@ jobs:
           path: trivy-report.json
           retention-days: 7
 
-      - name: Check High/Criticial Vulnerabilities
-        if: ${{ inputs.run-trivy-scan-and-copa-patch }}
-        env:
-          TRIVY_FORMAT: table
-          TRIVY_OUTPUT:
-        uses: aquasecurity/trivy-action@0.30.0
-        with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
-          format: table
-          severity: HIGH,CRITICAL
-          ignore-unfixed: false
-          # Don't fail workflow when high/critical vulns are present
-          exit-code: 0
-          # On a subsequent call to the action we know trivy is already installed so can skip this
-          skip-setup-trivy: true
-
       - name: Patch image with Copa
         if: ${{ inputs.run-trivy-scan-and-copa-patch }}
         run: |
@@ -107,3 +91,19 @@ jobs:
           copa patch -i $image:$tag -r trivy-report.json -t $tag
 
           docker push $image:$tag
+
+      - name: Post-Patch Vulnerabilities Check
+        if: ${{ inputs.run-trivy-scan-and-copa-patch }}
+        env:
+          TRIVY_FORMAT: table
+          TRIVY_OUTPUT:
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          # Don't fail workflow when high/critical vulns are present
+          exit-code: 0
+          # On a subsequent call to the action we know trivy is already installed so can skip this
+          skip-setup-trivy: true
