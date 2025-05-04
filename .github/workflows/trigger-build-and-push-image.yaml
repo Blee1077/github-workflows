@@ -15,11 +15,7 @@ on:
         required: false
         type: string
         default: latest
-      run-trivy-scan:
-        required: false
-        type: boolean
-        default: false
-      run-copa-patch:
+      run-trivy-scan-and-copa-patch:
         required: false
         type: boolean
         default: false
@@ -44,8 +40,7 @@ jobs:
           DOCKERFILE: ${{ inputs.dockerfile-path }}
           IMAGE: ${{ inputs.image-name }}
           TAG: ${{ inputs.image-tag }}
-          TRIVY: ${{ inputs.run-trivy-scan }}
-          COPA: ${{ inputs.run-copa-patch }}
+          TRIVY_COPA: ${{ inputs.run-trivy-scan-and-copa-patch }}
         run: |
           payload=$(jq -n \
             --arg caller_repo "$CALLER_REPO" \
@@ -53,8 +48,7 @@ jobs:
             --arg dockerfile "$DOCKERFILE" \
             --arg image "$IMAGE" \
             --arg tag "$TAG" \
-            --argjson trivy "$TRIVY" \
-            --argjson copa "$COPA" \
+            --argjson trivy_copa "$TRIVY_COPA" \
             '{
               ref: $ref,
               inputs: {
@@ -62,8 +56,7 @@ jobs:
                 "dockerfile-path": $dockerfile,
                 "image-name": $image,
                 "image-tag": $tag,
-                "run-trivy-scan": $trivy,
-                "run-copa-patch": $copa
+                "run-trivy-scan-and-copa-patch": $trivy_copa
               }
             }')
 

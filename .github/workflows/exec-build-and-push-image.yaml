@@ -16,11 +16,7 @@ on:
         required: false
         type: string
         default: latest
-      run-trivy-scan:
-        required: false
-        type: boolean
-        default: false
-      run-copa-patch:
+      run-trivy-scan-and-copa-patch:
         required: false
         type: boolean
         default: false
@@ -59,41 +55,38 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
 
       - name: Scan image for vulnerabilities with Trivy
-        if: ${{ inputs.run-trivy-scan }}
+        if: ${{ inputs.run-trivy-scan-and-copa-patch }}
         uses: aquasecurity/trivy-action@0.30.0
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
-          format: table
+          format: json
+          output: trivy-report.json
           ignore-unfixed: true
 
       - name: Upload Trivy Scan Report
-        if: ${{ inputs.run-trivy-scan }}
+        if: ${{ inputs.run-trivy-scan-and-copa-patch }}
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: trivy-report.json
           retention-days: 7
 
-      - name: Check for High or Critical vulnerabilities
-        if: ${{ inputs.run-trivy-scan && inputs.run-copa-patch }}
-        id: vuln-check
-        run: |
-          # Find if high or critical vulnerabilities are present
-          high=$(jq '[.Results[].Vulnerabilities[] | select(.Severity=="HIGH")] | length' trivy-report.json)
-          critical=$(jq '[.Results[].Vulnerabilities[] | select(.Severity=="CRITICAL")] | length' trivy-report.json)
-
-          # Print how many high and critical vulnerabilities are present
-          echo "High: $high, Critical: $critical"
-
-          # Set bool for next steps
-          if [ "$high" -gt 0 ] || [ "$critical" -gt 0 ]; then
-            echo "vulns_found=true" >> $GITHUB_OUTPUT
-          else
-            echo "vulns_found=false" >> $GITHUB_OUTPUT
-          fi
+      - name: Check High/Criticial Vulnerabilities
+        if: ${{ inputs.run-trivy-scan-and-copa-patch }}
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+          format: table
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          # Don't fail workflow when high/critical vulns are present
+          exit-code: 0
+          # On a subsequent call to the action we know trivy is already installed so can skip this
+          skip-setup-trivy: true
 
       - name: Patch image with Copa
-        if: ${{ steps.vuln-check.outputs.vulns_found == 'true' }}
+        if: ${{ inputs.run-trivy-scan-and-copa-patch }}
         run: |
           curl -sSL https://github.com/project-copacetic/copacetic/releases/latest/download/copa-linux-amd64 -o copa
           chmod +x copa
