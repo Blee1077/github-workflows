@@ -73,11 +73,13 @@ jobs:
 
       - name: Check High/Criticial Vulnerabilities
         if: ${{ inputs.run-trivy-scan-and-copa-patch }}
+        env:
+          TRIVY_FORMAT: table
+          TRIVY_OUTPUT:
         uses: aquasecurity/trivy-action@0.30.0
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
           format: table
-          scan-ref: .
           severity: HIGH,CRITICAL
           ignore-unfixed: false
           # Don't fail workflow when high/critical vulns are present
@@ -88,16 +90,19 @@ jobs:
       - name: Patch image with Copa
         if: ${{ inputs.run-trivy-scan-and-copa-patch }}
         run: |
-          curl -sSL https://github.com/project-copacetic/copacetic/releases/latest/download/copa-linux-amd64 -o copa
-          chmod +x copa
+          VERSION=$(curl -s https://api.github.com/repos/project-copacetic/copacetic/releases/latest | jq -r .tag_name)
+          FILE="copa_${VERSION#v}_linux_amd64.tar.gz"
+          URL="https://github.com/project-copacetic/copacetic/releases/download/${VERSION}/${FILE}"
+
+          curl -sSL "$URL" -o copa.tar.gz
+          tar -xzf copa.tar.gz
           sudo mv copa /usr/local/bin/
+          copa --version
 
           image=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image-name }}
           tag=${{ inputs.image-tag }}
 
-          # Run Copa patching
           copa patch -i $image:$tag -r trivy-report.json -t patched-image
 
-          # Tag patched image with the original tag (overwrite)
           docker tag patched-image $image:$tag
           docker push $image:$tag
