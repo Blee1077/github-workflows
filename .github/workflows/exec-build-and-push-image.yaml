@@ -104,6 +104,6 @@ jobs:
           tag=${{ inputs.image-tag }}
 
           # Patch and overwrite the original image
-          copa patch -i $image:$tag -r trivy-report.json -t $image:$tag
+          copa patch -i $image:$tag -r trivy-report.json -t $tag
 
           docker push $image:$tag
