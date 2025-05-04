@@ -4,6 +4,10 @@ on:
   push:
     branches: [master]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     uses: blee1077/github-workflows/.github/workflows/build-and-push-image.yaml@main
